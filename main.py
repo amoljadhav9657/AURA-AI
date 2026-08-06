@@ -1,26 +1,43 @@
 """
 =========================================
 AURA AI
-Version : 0.1.0
+Version : 0.5.0
 Founder : Amol Jadhav
 =========================================
 """
 
 from src.brain import Brain
+from src.voice.voice_manager import VoiceManager
 
 
 class AuraAI:
 
     def __init__(self):
         self.brain = Brain()
+        self.voice = VoiceManager()
 
     def start(self):
 
         print("=" * 60)
         print("🤖 Welcome to AURA AI")
-        print("Version : 0.1.0")
-        print("Type 'exit' to close AURA AI")
+        print("Version : 0.5.0")
         print("=" * 60)
+
+        print("\nSelect Mode")
+        print("1. Keyboard Mode")
+        print("2. Voice Mode")
+
+        choice = input("\nChoice : ").strip()
+
+        if choice == "2":
+            self.voice_mode()
+        else:
+            self.keyboard_mode()
+
+    def keyboard_mode(self):
+
+        print("\n⌨️ Keyboard Mode Started")
+        print("Type 'exit' to close AURA AI")
 
         while True:
 
@@ -36,6 +53,28 @@ class AuraAI:
             response = self.brain.process(user_input)
 
             print("AURA :", response)
+
+            self.voice.speak(response)
+
+    def voice_mode(self):
+
+        print("\n🎤 Voice Mode Started")
+        print("Say 'exit' to close AURA AI")
+
+        while True:
+
+            user_input = self.voice.listen()
+
+            if not user_input:
+                continue
+
+            if user_input.lower() == "exit":
+                self.voice.speak("Goodbye!")
+                break
+
+            response = self.brain.process(user_input)
+
+            self.voice.speak(response)
 
 
 def main():
