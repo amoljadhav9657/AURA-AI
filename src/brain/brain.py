@@ -1,6 +1,7 @@
 from .intent_classifier import IntentClassifier
 from .decision_engine import DecisionEngine
 from src.memory.memory import Memory
+from src.system.system_manager import SystemManager
 
 
 class Brain:
@@ -9,6 +10,7 @@ class Brain:
         self.intent = IntentClassifier()
         self.engine = DecisionEngine()
         self.memory = Memory()
+        self.system = SystemManager()   # ✅ Add this
 
     def process(self, text):
 
@@ -26,9 +28,14 @@ class Brain:
 
             if name:
                 return f"Your name is {name}."
-                
 
             return "I don't know your name yet."
+
+        # Check system commands first
+        result = self.system.execute(text)
+
+        if result:
+            return result
 
         # Normal AI processing
         intent = self.intent.detect(text)
