@@ -1,7 +1,7 @@
 """
 =========================================
 AURA AI Command Parser
-Version : 0.8.0
+Version : 0.9.0
 =========================================
 """
 
@@ -13,7 +13,25 @@ class CommandParser:
         command = command.lower().strip()
 
         # Web Search
-        if command.startswith("search "):
+        search_prefixes = [
+    "search for ",
+    "search ",
+    "find ",
+    "look up "
+]
+
+        for prefix in search_prefixes:
+
+            if command.startswith(prefix):
+
+                query = command[len(prefix):].strip()
+
+                if query:
+                    return ("search", query)
+
+        # Google Search
+        if command.startswith("google "):
+
             query = command[7:].strip()
 
             if query:
