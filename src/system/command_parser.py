@@ -1,7 +1,7 @@
 """
 =========================================
 AURA AI Command Parser
-Version : 0.7.0
+Version : 0.8.0
 =========================================
 """
 
@@ -11,6 +11,13 @@ class CommandParser:
     def parse(self, command):
 
         command = command.lower().strip()
+
+        # Web Search
+        if command.startswith("search "):
+            query = command[7:].strip()
+
+            if query:
+                return ("search", query)
 
         # Browser
         if "youtube" in command:
@@ -37,6 +44,7 @@ class CommandParser:
 
         elif "explorer" in command:
             return ("app", "explorer")
+
         # Folders
         elif "downloads" in command:
             return ("folder", "downloads")
@@ -46,4 +54,5 @@ class CommandParser:
 
         elif "desktop" in command:
             return ("folder", "desktop")
+
         return ("chat", command)
