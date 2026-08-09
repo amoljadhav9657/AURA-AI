@@ -20,3 +20,4 @@ Thumbs.db
 
 # Temporary Files
 *.tmpdata/aura.db
+data/
