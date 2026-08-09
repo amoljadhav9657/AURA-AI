@@ -1,7 +1,7 @@
 """
 =========================================
 AURA AI - Decision Engine
-Version : 0.1.0
+Version : 0.10.0
 =========================================
 """
 
@@ -16,10 +16,20 @@ class DecisionEngine:
             return "Hello! I am AURA AI."
 
         elif intent == "time":
-            return datetime.now().strftime("Current Time : %I:%M %p")
+            return datetime.now().strftime(
+                "Current Time : %I:%M %p"
+            )
 
         elif intent == "date":
-            return datetime.now().strftime("Today's Date : %d-%m-%Y")
+            return datetime.now().strftime(
+                "Today's Date : %d-%m-%Y"
+            )
+
+        elif intent == "memory_save":
+            return "I can save that information."
+
+        elif intent == "memory_recall":
+            return "I can recall that information."
 
         else:
             return "Sorry, I don't understand."

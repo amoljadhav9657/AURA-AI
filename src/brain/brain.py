@@ -1,3 +1,10 @@
+"""
+=========================================
+AURA AI - Brain
+Version : 0.10.0
+=========================================
+"""
+
 from .intent_classifier import IntentClassifier
 from .decision_engine import DecisionEngine
 from src.memory.memory import Memory
@@ -10,26 +17,14 @@ class Brain:
         self.intent = IntentClassifier()
         self.engine = DecisionEngine()
         self.memory = Memory()
-        self.system = SystemManager()   # ✅ Add this
+        self.system = SystemManager()
 
     def process(self, text):
 
-        lower = text.lower().strip()
+        text = text.strip()
 
-        # Save user's name
-        if lower.startswith("my name is "):
-            name = text[11:].strip()
-            self.memory.remember("name", name)
-            return f"Nice to meet you, {name}."
-
-        # Recall user's name
-        if "what is my name" in lower:
-            name = self.memory.recall("name")
-
-            if name:
-                return f"Your name is {name}."
-
-            return "I don't know your name yet."
+        if not text:
+            return "Please say something."
 
         # Check system commands first
         result = self.system.execute(text)
@@ -37,6 +32,29 @@ class Brain:
         if result:
             return result
 
-        # Normal AI processing
+        # Detect intent
         intent = self.intent.detect(text)
+
+        # Memory - Save
+        if intent == "memory_save":
+
+            name = text[11:].strip()
+
+            if name:
+                self.memory.remember("name", name)
+                return f"Nice to meet you, {name}."
+
+            return "Please tell me your name."
+
+        # Memory - Recall
+        if intent == "memory_recall":
+
+            name = self.memory.recall("name")
+
+            if name:
+                return f"Your name is {name}."
+
+            return "I don't know your name yet."
+
+        # Normal AI processing
         return self.engine.execute(intent)
