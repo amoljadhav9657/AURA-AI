@@ -1,3 +1,10 @@
+"""
+=========================================
+AURA AI - Memory Manager
+Version : 0.11.0
+=========================================
+"""
+
 from .short_memory import ShortMemory
 from .long_memory import LongMemory
 
@@ -8,6 +15,11 @@ class MemoryManager:
         self.short = ShortMemory()
         self.long = LongMemory()
 
-    def remember(self, text):
-        self.short.add(text)
-        self.long.save(text)
+    def remember(self, key, value):
+
+        self.short.add(f"{key}: {value}")
+        self.long.save(key, value)
+
+    def recall(self, key):
+
+        return self.long.load(key)
