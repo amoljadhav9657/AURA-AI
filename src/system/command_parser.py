@@ -14,11 +14,11 @@ class CommandParser:
 
         # Web Search
         search_prefixes = [
-    "search for ",
-    "search ",
-    "find ",
-    "look up "
-]
+            "search for ",
+            "search ",
+            "find ",
+            "look up "
+        ]
 
         for prefix in search_prefixes:
 
@@ -37,21 +37,44 @@ class CommandParser:
             if query:
                 return ("search", query)
 
-        # Browser
-        if "youtube" in command:
-            return ("browser", "https://www.youtube.com")
+        # Browser Commands
+        browser_commands = {
+            "youtube": [
+                "open youtube",
+                "go to youtube",
+                "launch youtube"
+            ],
+            "google": [
+                "open google",
+                "go to google",
+                "launch google"
+            ],
+            "gmail": [
+                "open gmail",
+                "go to gmail",
+                "launch gmail"
+            ],
+            "chatgpt": [
+                "open chatgpt",
+                "go to chatgpt",
+                "launch chatgpt"
+            ]
+        }
 
-        elif "google" in command:
-            return ("browser", "https://www.google.com")
+        browser_urls = {
+            "youtube": "https://www.youtube.com",
+            "google": "https://www.google.com",
+            "gmail": "https://mail.google.com",
+            "chatgpt": "https://chat.openai.com"
+        }
 
-        elif "gmail" in command:
-            return ("browser", "https://mail.google.com")
+        for site, commands in browser_commands.items():
 
-        elif "chatgpt" in command:
-            return ("browser", "https://chat.openai.com")
+            if command in commands:
+                return ("browser", browser_urls[site])
 
         # Apps
-        elif "calculator" in command:
+        if "calculator" in command:
             return ("app", "calculator")
 
         elif "notepad" in command:
@@ -64,7 +87,7 @@ class CommandParser:
             return ("app", "explorer")
 
         # Folders
-        elif "downloads" in command:
+        if "downloads" in command:
             return ("folder", "downloads")
 
         elif "documents" in command:
