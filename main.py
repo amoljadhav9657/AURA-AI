@@ -1,13 +1,14 @@
 """
 =========================================
 AURA AI
-Version : 0.5.0
+Version : 0.7.0
 Founder : Amol Jadhav
 =========================================
 """
 
 from src.brain import Brain
 from src.voice.voice_manager import VoiceManager
+from src.config import APP_NAME, VERSION
 
 
 class AuraAI:
@@ -19,8 +20,8 @@ class AuraAI:
     def start(self):
 
         print("=" * 60)
-        print("🤖 Welcome to AURA AI")
-        print("Version : 0.5.0")
+        print(f"🤖 Welcome to {APP_NAME}")
+        print(f"Version : {VERSION}")
         print("=" * 60)
 
         print("\nSelect Mode")

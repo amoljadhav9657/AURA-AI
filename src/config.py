@@ -1,13 +1,13 @@
 """
 =========================================
 AURA AI Configuration
-Version : 0.6.0
+Version : 0.7.0
 =========================================
 """
 
 # Project Info
 APP_NAME = "AURA AI"
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 FOUNDER = "Amol Jadhav"
 
 # Development
