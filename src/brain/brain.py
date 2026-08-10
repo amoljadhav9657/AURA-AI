@@ -120,7 +120,7 @@ class Brain:
             self.memory.remember_conversation("aura", response)
             return response
 
-                       # Context-aware processing
+                               # Context-aware processing
         if intent == "unknown":
 
             # Try to resolve references like:
@@ -128,7 +128,24 @@ class Brain:
             resolved = self.context.resolve_reference(text)
 
             if resolved:
-                response = f"You are referring to {resolved}."
+
+                lower_text = text.lower()
+
+                if "like it" in lower_text:
+                    response = f"That's great! You really like {resolved}."
+
+                elif "like this" in lower_text:
+                    response = f"That's great! You really like {resolved}."
+
+                elif "like that" in lower_text:
+                    response = f"That's great! You really like {resolved}."
+
+                elif "good" in lower_text:
+                    response = f"Yes, {resolved} sounds good."
+
+                else:
+                    response = f"You are referring to {resolved}."
+
                 self.memory.remember_conversation("aura", response)
                 return response
 
@@ -136,9 +153,11 @@ class Brain:
             relevant_context = self.context.find_relevant_context(text)
 
             if relevant_context:
+
                 last_context = relevant_context[-1]
 
                 response = f"I remember you mentioned: {last_context['text']}"
+
                 self.memory.remember_conversation("aura", response)
                 return response
                         # Automatic Fact Memory
