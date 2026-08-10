@@ -123,19 +123,25 @@ class Brain:
                        # Context-aware processing
         if intent == "unknown":
 
+            # Try to resolve references like:
+            # it, this, that, these, those
+            resolved = self.context.resolve_reference(text)
+
+            if resolved:
+                response = f"You are referring to {resolved}."
+                self.memory.remember_conversation("aura", response)
+                return response
+
+            # Search for relevant previous context
             relevant_context = self.context.find_relevant_context(text)
 
             if relevant_context:
-
                 last_context = relevant_context[-1]
 
                 response = f"I remember you mentioned: {last_context['text']}"
-
                 self.memory.remember_conversation("aura", response)
-
                 return response
-
-        # Automatic Fact Memory
+                        # Automatic Fact Memory
         if intent == "memory_auto_save":
 
             statement = text.strip()
@@ -166,12 +172,14 @@ class Brain:
 
             return response
 
+
         # Normal AI processing
         response = self.engine.execute(intent)
 
         self.memory.remember_conversation("aura", response)
 
         return response
+
     def get_recent_conversation(self):
         return self.memory.get_conversation()
 
