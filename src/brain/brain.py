@@ -21,20 +21,15 @@ class Brain:
         if not text:
             return "Please say something."
 
-        # Save user message to short-term memory
         self.memory.remember_conversation("user", text)
 
-        # System commands first
+        # System commands
         result = self.system.execute(text)
 
         if result:
             self.memory.remember_conversation("aura", result)
             return result
-        # Detect relevant conversation context
-        relevant_context = self.context.find_relevant_context(text)
 
-        # Detect intent
-        intent = self.intent.detect(text)
         # Detect intent
         intent = self.intent.detect(text)
 
@@ -120,11 +115,40 @@ class Brain:
             self.memory.remember_conversation("aura", response)
             return response
 
-                               # Context-aware processing
+        # Automatic Fact Memory
+        if intent == "memory_auto_save":
+
+            statement = text.strip()
+
+            if statement.startswith("my "):
+                statement = statement[3:].strip()
+
+            if " is " in statement:
+
+                key, value = statement.split(" is ", 1)
+
+                key = key.strip()
+                value = value.strip()
+
+                if key and value:
+
+                    self.memory.remember(key, value)
+
+                    response = f"I'll remember that your {key} is {value}."
+                    self.memory.remember_conversation("aura", response)
+                    return response
+
+            response = "I couldn't understand that fact."
+            self.memory.remember_conversation("aura", response)
+            return response
+
+        # Context-aware processing
         if intent == "unknown":
 
-            # Try to resolve references like:
-            # it, this, that, these, those
+            current_topic = self.context.get_current_topic()
+            current_value = self.context.get_current_topic_value()
+
+            # Resolve references such as it, this, that
             resolved = self.context.resolve_reference(text)
 
             if resolved:
@@ -149,48 +173,35 @@ class Brain:
                 self.memory.remember_conversation("aura", response)
                 return response
 
-            # Search for relevant previous context
+            # Topic-aware response
+            if current_topic and current_value:
+
+                lower_text = text.lower()
+
+                if "like" in lower_text:
+
+                    response = (
+                        f"That's great! You like your "
+                        f"{current_topic}, {current_value}."
+                    )
+
+                    self.memory.remember_conversation("aura", response)
+                    return response
+
+            # Search previous context
             relevant_context = self.context.find_relevant_context(text)
 
             if relevant_context:
 
                 last_context = relevant_context[-1]
 
-                response = f"I remember you mentioned: {last_context['text']}"
+                response = (
+                    f"I remember you mentioned: "
+                    f"{last_context['text']}"
+                )
 
                 self.memory.remember_conversation("aura", response)
                 return response
-                        # Automatic Fact Memory
-        if intent == "memory_auto_save":
-
-            statement = text.strip()
-
-            if statement.startswith("my "):
-                statement = statement[3:].strip()
-
-            if " is " in statement:
-
-                key, value = statement.split(" is ", 1)
-
-                key = key.strip()
-                value = value.strip()
-
-                if key and value:
-
-                    self.memory.remember(key, value)
-
-                    response = f"I'll remember that your {key} is {value}."
-
-                    self.memory.remember_conversation("aura", response)
-
-                    return response
-
-            response = "I couldn't understand that fact."
-
-            self.memory.remember_conversation("aura", response)
-
-            return response
-
 
         # Normal AI processing
         response = self.engine.execute(intent)

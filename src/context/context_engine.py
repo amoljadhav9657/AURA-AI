@@ -61,7 +61,16 @@ class ContextEngine:
         for word in words:
             word = word.strip(".,!?")
 
-            if word in ["it", "this", "that", "these", "those", "he", "she", "they"]:
+            if word in [
+                "it",
+                "this",
+                "that",
+                "these",
+                "those",
+                "he",
+                "she",
+                "they"
+            ]:
                 references.append(word)
 
         return references
@@ -98,3 +107,51 @@ class ContextEngine:
                     return value
 
         return None
+
+    # v0.16.0 - Topic Tracking
+
+    def detect_topic(self):
+        conversations = self.memory.get_conversation()
+
+        if not conversations:
+            return None
+
+        for message in reversed(conversations):
+
+            if message["role"] != "user":
+                continue
+
+            text = message["text"].lower().strip()
+
+            if text.startswith("my ") and " is " in text:
+
+                statement = text[3:].strip()
+
+                key, value = statement.split(" is ", 1)
+
+                key = key.strip()
+                value = value.strip().rstrip(".,!?")
+
+                if key and value:
+                    return {
+                        "key": key,
+                        "value": value
+                    }
+
+        return None
+
+    def get_current_topic(self):
+        topic = self.detect_topic()
+
+        if not topic:
+            return None
+
+        return topic["key"]
+
+    def get_current_topic_value(self):
+        topic = self.detect_topic()
+
+        if not topic:
+            return None
+
+        return topic["value"]
