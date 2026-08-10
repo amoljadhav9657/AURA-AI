@@ -2,6 +2,7 @@ from .intent_classifier import IntentClassifier
 from .decision_engine import DecisionEngine
 from src.memory.memory_manager import MemoryManager
 from src.system.system_manager import SystemManager
+from src.context.context_engine import ContextEngine
 
 
 class Brain:
@@ -11,6 +12,7 @@ class Brain:
         self.engine = DecisionEngine()
         self.memory = MemoryManager()
         self.system = SystemManager()
+        self.context = ContextEngine(self.memory)
 
     def process(self, text):
 
@@ -28,7 +30,11 @@ class Brain:
         if result:
             self.memory.remember_conversation("aura", result)
             return result
+        # Detect relevant conversation context
+        relevant_context = self.context.find_relevant_context(text)
 
+        # Detect intent
+        intent = self.intent.detect(text)
         # Detect intent
         intent = self.intent.detect(text)
 
@@ -114,13 +120,58 @@ class Brain:
             self.memory.remember_conversation("aura", response)
             return response
 
+                       # Context-aware processing
+        if intent == "unknown":
+
+            relevant_context = self.context.find_relevant_context(text)
+
+            if relevant_context:
+
+                last_context = relevant_context[-1]
+
+                response = f"I remember you mentioned: {last_context['text']}"
+
+                self.memory.remember_conversation("aura", response)
+
+                return response
+
+        # Automatic Fact Memory
+        if intent == "memory_auto_save":
+
+            statement = text.strip()
+
+            if statement.startswith("my "):
+                statement = statement[3:].strip()
+
+            if " is " in statement:
+
+                key, value = statement.split(" is ", 1)
+
+                key = key.strip()
+                value = value.strip()
+
+                if key and value:
+
+                    self.memory.remember(key, value)
+
+                    response = f"I'll remember that your {key} is {value}."
+
+                    self.memory.remember_conversation("aura", response)
+
+                    return response
+
+            response = "I couldn't understand that fact."
+
+            self.memory.remember_conversation("aura", response)
+
+            return response
+
         # Normal AI processing
         response = self.engine.execute(intent)
 
         self.memory.remember_conversation("aura", response)
 
         return response
-
     def get_recent_conversation(self):
         return self.memory.get_conversation()
 
