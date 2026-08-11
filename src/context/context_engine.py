@@ -2,6 +2,7 @@ class ContextEngine:
 
     def __init__(self, memory):
         self.memory = memory
+        self.active_topic = None
 
     def get_recent_context(self, limit=5):
         conversations = self.memory.get_conversation()
@@ -141,6 +142,9 @@ class ContextEngine:
         return None
 
     def get_current_topic(self):
+        if self.active_topic:
+            return self.active_topic["key"]
+
         topic = self.detect_topic()
 
         if not topic:
@@ -149,6 +153,9 @@ class ContextEngine:
         return topic["key"]
 
     def get_current_topic_value(self):
+        if self.active_topic:
+            return self.active_topic["value"]
+
         topic = self.detect_topic()
 
         if not topic:
@@ -197,7 +204,75 @@ class ContextEngine:
                 return True
 
         return False
+            # v0.17.0 - Multi Topic Context
 
+    def get_all_topics(self):
+        conversations = self.memory.get_conversation()
+
+        topics = []
+
+        if not conversations:
+            return topics
+
+        for message in conversations:
+            if message["role"] != "user":
+                continue
+
+            text = message["text"].lower().strip()
+
+            if text.startswith("my ") and " is " in text:
+                statement = text[3:].strip()
+
+                key, value = statement.split(" is ", 1)
+
+                key = key.strip()
+                value = value.strip().rstrip(".,!?")
+
+                if key and value:
+                    topics.append({
+                        "key": key,
+                        "value": value
+                    })
+
+        return topics
+
+    def find_topic(self, text):
+        text = text.lower().strip()
+
+        topics = self.get_all_topics()
+
+        if not topics:
+            return None
+
+        # Exact topic/value matching
+        for topic in reversed(topics):
+
+            key = topic["key"]
+            value = topic["value"]
+
+            key_words = key.split()
+
+            for word in key_words:
+                if len(word) > 2 and word in text:
+                    return topic
+
+            if value in text:
+                return topic
+
+        return None
+
+    def get_topic_history(self):
+        return self.get_all_topics()
+
+    def switch_topic(self, text):
+        topic = self.find_topic(text)
+
+        if topic:
+            self.active_topic = topic
+            return topic
+
+        return None
+    
     def get_context_summary(self):
         state = self.get_current_state()
 

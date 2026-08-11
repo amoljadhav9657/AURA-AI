@@ -148,9 +148,18 @@ class Brain:
             current_topic = self.context.get_current_topic()
             current_value = self.context.get_current_topic_value()
             is_follow_up = self.context.is_follow_up(text)
+            topic_match = self.context.switch_topic(text)
 
-            # Resolve references such as it, this, that
-            resolved = self.context.resolve_reference(text)
+            # v0.17.0 - Switch to matching topic
+            if topic_match:
+                current_topic = topic_match["key"]
+                current_value = topic_match["value"]
+
+            # Resolve references using switched topic
+            if topic_match and self.context.find_reference(text):
+                resolved = topic_match["value"]
+            else:
+                resolved = self.context.resolve_reference(text)
 
             if resolved:
 
