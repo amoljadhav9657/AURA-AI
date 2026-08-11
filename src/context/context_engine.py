@@ -88,14 +88,12 @@ class ContextEngine:
             return None
 
         for message in reversed(conversations[:-1]):
-
             if message["role"] != "user":
                 continue
 
             previous_text = message["text"]
 
             if " is " in previous_text:
-
                 key, value = previous_text.split(" is ", 1)
 
                 key = key.strip()
@@ -118,14 +116,12 @@ class ContextEngine:
             return None
 
         for message in reversed(conversations):
-
             if message["role"] != "user":
                 continue
 
             text = message["text"].lower().strip()
 
             if text.startswith("my ") and " is " in text:
-
                 statement = text[3:].strip()
 
                 key, value = statement.split(" is ", 1)
@@ -142,10 +138,7 @@ class ContextEngine:
         return None
 
     def get_current_topic(self):
-        if self.active_topic:
-            return self.active_topic["key"]
-
-        topic = self.detect_topic()
+        topic = self.get_active_topic()
 
         if not topic:
             return None
@@ -153,19 +146,17 @@ class ContextEngine:
         return topic["key"]
 
     def get_current_topic_value(self):
-        if self.active_topic:
-            return self.active_topic["value"]
-
-        topic = self.detect_topic()
+        topic = self.get_active_topic()
 
         if not topic:
             return None
 
         return topic["value"]
-            # v0.17.0 - Conversation State
+
+    # v0.17.0 - Conversation State
 
     def get_current_state(self):
-        topic = self.detect_topic()
+        topic = self.get_active_topic()
 
         if not topic:
             return {
@@ -204,7 +195,8 @@ class ContextEngine:
                 return True
 
         return False
-            # v0.17.0 - Multi Topic Context
+
+    # v0.17.0 - Multi Topic Context
 
     def get_all_topics(self):
         conversations = self.memory.get_conversation()
@@ -244,9 +236,7 @@ class ContextEngine:
         if not topics:
             return None
 
-        # Exact topic/value matching
         for topic in reversed(topics):
-
             key = topic["key"]
             value = topic["value"]
 
@@ -268,15 +258,59 @@ class ContextEngine:
         topic = self.find_topic(text)
 
         if topic:
-            self.active_topic = topic
-            return topic
+            self.active_topic = {
+                "key": topic["key"],
+                "value": topic["value"]
+            }
+
+            return self.active_topic
 
         return None
-    
+
+    # v0.18.0 - Intelligent Topic Context
+
+    def get_active_topic(self):
+        if self.active_topic:
+            return self.active_topic
+
+        topic = self.detect_topic()
+
+        if topic:
+            self.active_topic = {
+                "key": topic["key"],
+                "value": topic["value"]
+            }
+
+        return self.active_topic
+
+    def get_previous_topic(self):
+        topics = self.get_all_topics()
+
+        if len(topics) < 2:
+            return None
+
+        active = self.get_active_topic()
+
+        for topic in reversed(topics[:-1]):
+            if not active or topic != active:
+                return topic
+
+        return None
+
+    def get_context_state(self):
+        return {
+            "active_topic": self.get_active_topic(),
+            "previous_topic": self.get_previous_topic(),
+            "history": self.get_all_topics()
+        }
+
     def get_context_summary(self):
         state = self.get_current_state()
 
         if not state["topic"]:
             return "No active topic."
 
-        return f"Current topic: {state['topic']}. Current value: {state['value']}."
+        return (
+            f"Current topic: {state['topic']}. "
+            f"Current value: {state['value']}."
+        )
