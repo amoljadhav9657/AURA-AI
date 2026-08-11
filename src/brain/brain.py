@@ -147,6 +147,7 @@ class Brain:
 
             current_topic = self.context.get_current_topic()
             current_value = self.context.get_current_topic_value()
+            is_follow_up = self.context.is_follow_up(text)
 
             # Resolve references such as it, this, that
             resolved = self.context.resolve_reference(text)
@@ -174,19 +175,39 @@ class Brain:
                 return response
 
             # Topic-aware response
-            if current_topic and current_value:
+            if current_topic and current_value and is_follow_up:
 
                 lower_text = text.lower()
 
-                if "like" in lower_text:
+                if "tell me more" in lower_text:
+                    response = (
+                        f"Your current topic is your "
+                        f"{current_topic}, and you mentioned {current_value}."
+                    )
 
+                elif "like" in lower_text:
                     response = (
                         f"That's great! You like your "
                         f"{current_topic}, {current_value}."
                     )
 
-                    self.memory.remember_conversation("aura", response)
-                    return response
+                elif "good" in lower_text:
+                    response = f"Yes, {current_value} sounds good."
+
+                elif "why" in lower_text:
+                    response = (
+                        f"We were talking about your "
+                        f"{current_topic}, which is {current_value}."
+                    )
+
+                else:
+                    response = (
+                        f"We are still talking about your "
+                        f"{current_topic}, {current_value}."
+                    )
+
+                self.memory.remember_conversation("aura", response)
+                return response
 
             # Search previous context
             relevant_context = self.context.find_relevant_context(text)

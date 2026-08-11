@@ -155,3 +155,53 @@ class ContextEngine:
             return None
 
         return topic["value"]
+            # v0.17.0 - Conversation State
+
+    def get_current_state(self):
+        topic = self.detect_topic()
+
+        if not topic:
+            return {
+                "topic": None,
+                "value": None
+            }
+
+        return {
+            "topic": topic["key"],
+            "value": topic["value"]
+        }
+
+    def is_follow_up(self, text):
+        text = text.lower().strip()
+
+        references = self.find_reference(text)
+
+        if references:
+            return True
+
+        follow_up_phrases = [
+            "what about",
+            "how about",
+            "and",
+            "also",
+            "but",
+            "then",
+            "why",
+            "how",
+            "really",
+            "tell me more"
+        ]
+
+        for phrase in follow_up_phrases:
+            if text.startswith(phrase + " ") or text == phrase:
+                return True
+
+        return False
+
+    def get_context_summary(self):
+        state = self.get_current_state()
+
+        if not state["topic"]:
+            return "No active topic."
+
+        return f"Current topic: {state['topic']}. Current value: {state['value']}."
