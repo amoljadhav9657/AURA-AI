@@ -25,3 +25,6 @@ class MemoryManager:
 
     def recall(self, key):
         return self.long.load(key)
+
+    def get_all_memories(self):
+        return self.long.get_all()

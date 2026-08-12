@@ -1,10 +1,3 @@
-"""
-=========================================
-AURA AI Database
-Version : 0.3.0
-=========================================
-"""
-
 import sqlite3
 import os
 
@@ -21,7 +14,6 @@ class Database:
         self.db_path = os.path.join(db_folder, "aura.db")
 
         self.conn = sqlite3.connect(self.db_path)
-
         self.cursor = self.conn.cursor()
 
         self.create_tables()
@@ -60,3 +52,21 @@ class Database:
             return row[0]
 
         return None
+
+    def get_all_memories(self):
+
+        self.cursor.execute("""
+        SELECT key, value
+        FROM memory
+        ORDER BY id ASC
+        """)
+
+        rows = self.cursor.fetchall()
+
+        return [
+            {
+                "key": row[0],
+                "value": row[1]
+            }
+            for row in rows
+        ]

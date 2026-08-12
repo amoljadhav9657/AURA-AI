@@ -1,10 +1,3 @@
-"""
-=========================================
-AURA AI - Long Memory
-Version : 0.11.0
-=========================================
-"""
-
 from src.database import Database
 
 
@@ -18,3 +11,6 @@ class LongMemory:
 
     def load(self, key):
         return self.db.load_memory(key)
+
+    def get_all(self):
+        return self.db.get_all_memories()
