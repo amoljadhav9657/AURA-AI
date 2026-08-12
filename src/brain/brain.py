@@ -114,8 +114,26 @@ class Brain:
             response = "What would you like me to recall?"
             self.memory.remember_conversation("aura", response)
             return response
+                # ---------------------------------------------------------
+            # ---------------------------------------------------------
+        # Basic Decision Engine
+        # ---------------------------------------------------------
 
+        if intent in ["greeting", "time", "date"]:
+
+            response = self.engine.execute(intent)
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        # ---------------------------------------------------------
         # Automatic Fact Memory
+        # ---------------------------------------------------------
+
         if intent == "memory_auto_save":
 
             statement = text.strip()
@@ -134,100 +152,171 @@ class Brain:
 
                     self.memory.remember(key, value)
 
-                    response = f"I'll remember that your {key} is {value}."
-                    self.memory.remember_conversation("aura", response)
+                    response = (
+                        f"I'll remember that your {key} is {value}."
+                    )
+
+                    self.memory.remember_conversation(
+                        "aura",
+                        response
+                    )
+
                     return response
 
             response = "I couldn't understand that fact."
-            self.memory.remember_conversation("aura", response)
-            return response
 
-        # Context-aware processing
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+                        # ---------------------------------------------------------
+        # v0.20.0 - Context & Topic Router
+        # ---------------------------------------------------------
+
         if intent == "unknown":
 
-            # v0.18.0 - Intelligent active topic handling
-            topic_match = self.context.switch_topic(text)
+            lower_text = text.lower().strip()
 
-            if topic_match:
-                current_topic = topic_match["key"]
-                current_value = topic_match["value"]
-            else:
-                active_topic = self.context.get_active_topic()
+            # =====================================================
+            # 1. EXPLICIT TOPIC ROUTING
+            # =====================================================
 
-                if active_topic:
-                    current_topic = active_topic["key"]
-                    current_value = active_topic["value"]
-                else:
-                    current_topic = self.context.get_current_topic()
-                    current_value = self.context.get_current_topic_value()
+            if (
+                lower_text.startswith("what about ")
+                or lower_text.startswith("how about ")
+            ):
 
-            is_follow_up = self.context.is_follow_up(text)
+                requested_topic = lower_text.split(" ", 2)[2]
+                requested_topic = requested_topic.strip().rstrip("?!. ")
 
-            # Resolve references using switched topic
-            if topic_match and self.context.find_reference(text):
-                resolved = topic_match["value"]
-            else:
-                resolved = self.context.resolve_reference(text)
+                topic = self.context.find_topic(requested_topic)
 
-            if resolved:
+                if topic:
 
-                lower_text = text.lower()
+                    # IMPORTANT:
+                    # Explicit topic ALWAYS replaces active topic.
+                    self.context.set_active_topic(topic)
 
-                if "like it" in lower_text:
-                    response = f"That's great! You really like {resolved}."
+                    current_topic = topic["key"]
+                    current_value = topic["value"]
 
-                elif "like this" in lower_text:
-                    response = f"That's great! You really like {resolved}."
-
-                elif "like that" in lower_text:
-                    response = f"That's great! You really like {resolved}."
-
-                elif "good" in lower_text:
-                    response = f"Yes, {resolved} sounds good."
-
-                else:
-                    response = f"You are referring to {resolved}."
-
-                self.memory.remember_conversation("aura", response)
-                return response
-
-            # Topic-aware response
-            if current_topic and current_value and is_follow_up:
-
-                lower_text = text.lower()
-
-                if "tell me more" in lower_text:
-                    response = (
-                        f"Your current topic is your "
-                        f"{current_topic}, and you mentioned {current_value}."
-                    )
-
-                elif "like" in lower_text:
-                    response = (
-                        f"That's great! You like your "
-                        f"{current_topic}, {current_value}."
-                    )
-
-                elif "good" in lower_text:
-                    response = f"Yes, {current_value} sounds good."
-
-                elif "why" in lower_text:
-                    response = (
-                        f"We were talking about your "
-                        f"{current_topic}, which is {current_value}."
-                    )
-
-                else:
                     response = (
                         f"We are still talking about your "
                         f"{current_topic}, {current_value}."
                     )
 
-                self.memory.remember_conversation("aura", response)
+                    self.memory.remember_conversation(
+                        "aura",
+                        response
+                    )
+
+                    return response
+
+            # =====================================================
+            # 2. GENERIC FOLLOW-UP
+            # =====================================================
+
+            active_topic = self.context.get_active_topic()
+
+            if active_topic and self.context.is_follow_up(text):
+
+                current_topic = active_topic["key"]
+                current_value = active_topic["value"]
+
+                if "tell me more" in lower_text:
+
+                    response = (
+                        f"Your current topic is your "
+                        f"{current_topic}, and you mentioned "
+                        f"{current_value}."
+                    )
+
+                elif (
+                    "like it" in lower_text
+                    or "like this" in lower_text
+                    or "like that" in lower_text
+                ):
+
+                    response = (
+                        f"That's great! You really like "
+                        f"{current_value}."
+                    )
+
+                elif "good" in lower_text:
+
+                    response = (
+                        f"Yes, {current_value} sounds good."
+                    )
+
+                elif "why" in lower_text:
+
+                    response = (
+                        f"We were talking about your "
+                        f"{current_topic}, which is "
+                        f"{current_value}."
+                    )
+
+                else:
+
+                    response = (
+                        f"We are still talking about your "
+                        f"{current_topic}, {current_value}."
+                    )
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
                 return response
 
-            # Search previous context
-            relevant_context = self.context.find_relevant_context(text)
+            # =====================================================
+            # 3. GENERIC REFERENCE
+            # =====================================================
+
+            resolved = self.context.resolve_reference(text)
+
+            if resolved:
+
+                if (
+                    "like it" in lower_text
+                    or "like this" in lower_text
+                    or "like that" in lower_text
+                ):
+
+                    response = (
+                        f"That's great! You really like "
+                        f"{resolved}."
+                    )
+
+                elif "good" in lower_text:
+
+                    response = (
+                        f"Yes, {resolved} sounds good."
+                    )
+
+                else:
+
+                    response = (
+                        f"You are referring to {resolved}."
+                    )
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
+                return response
+
+            # =====================================================
+            # 4. SEARCH PREVIOUS CONTEXT
+            # =====================================================
+
+            relevant_context = (
+                self.context.find_relevant_context(text)
+            )
 
             if relevant_context:
 
@@ -238,18 +327,9 @@ class Brain:
                     f"{last_context['text']}"
                 )
 
-                self.memory.remember_conversation("aura", response)
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
                 return response
-
-        # Normal AI processing
-        response = self.engine.execute(intent)
-
-        self.memory.remember_conversation("aura", response)
-
-        return response
-
-    def get_recent_conversation(self):
-        return self.memory.get_conversation()
-
-    def clear_recent_conversation(self):
-        self.memory.clear_conversation()
