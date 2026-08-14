@@ -34,6 +34,18 @@ class IntentClassifier:
         elif text.startswith("my ") and " is " in text:
             return "memory_auto_save"
 
+        # System / Action Commands
+        elif (
+            text.startswith("open ")
+            or text.startswith("launch ")
+            or text.startswith("go to ")
+            or text.startswith("search ")
+            or text.startswith("search for ")
+            or text.startswith("find ")
+            or text.startswith("look up ")
+        ):
+            return "system_action"
+
         # Unknown
         else:
             return "unknown"
