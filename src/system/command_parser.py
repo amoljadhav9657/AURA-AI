@@ -85,7 +85,8 @@ class CommandParser:
 
         elif "explorer" in command:
             return ("app", "explorer")
-
+        elif "vscode" in command or "vs code" in command:
+            return ("app", "vscode")
         # Folders
         if "downloads" in command:
             return ("folder", "downloads")

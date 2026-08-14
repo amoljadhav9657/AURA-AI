@@ -30,6 +30,10 @@ class AppLauncher:
                 "linux": "nautilus",
                 "windows": "explorer.exe",
             },
+"vscode": {
+    "linux": "code",
+    "windows": "code.exe",
+},
         }
 
     def open(self, app_name):
