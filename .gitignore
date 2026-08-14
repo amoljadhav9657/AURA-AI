@@ -42,3 +42,4 @@ src/context/*.v019_backup
 src/context/*.v019_find_topic_backup
 src/context/*.v019_topic_backup
 src/context/*.swp
+*.swp
