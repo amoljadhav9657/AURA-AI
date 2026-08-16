@@ -5,7 +5,7 @@ class IntentClassifier:
         text = text.lower().strip()
 
         # Greeting
-        if any(word in text for word in ["hello", "hi", "hey"]):
+        if text in ["hello", "hi", "hey"]:
             return "greeting"
 
         # Time

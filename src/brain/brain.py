@@ -3,6 +3,7 @@ from .decision_engine import DecisionEngine
 from src.memory.memory_manager import MemoryManager
 from src.system.system_manager import SystemManager
 from src.context.context_engine import ContextEngine
+from src.action.action_executor import ActionExecutor
 
 
 class Brain:
@@ -12,6 +13,7 @@ class Brain:
         self.engine = DecisionEngine()
         self.memory = MemoryManager()
         self.system = SystemManager()
+        self.action = ActionExecutor()
         self.context = ContextEngine(self.memory)
 
     def process(self, text):
@@ -23,16 +25,51 @@ class Brain:
 
         self.memory.remember_conversation("user", text)
 
-        # System commands
-        result = self.system.execute(text)
-
-        if result:
-            self.memory.remember_conversation("aura", result)
-            return result
-
-        # Detect intent
+                # Detect intent
         intent = self.intent.detect(text)
 
+        # ---------------------------------------------------------
+        # v0.25.0 - Action Executor Routing
+        # ---------------------------------------------------------
+
+        if intent == "system_action":
+
+            command_type, value = self.system.parser.parse(text)
+
+            # Application commands → ActionExecutor
+            if command_type == "app":
+
+                action_result = self.action.execute(
+                    "open_app",
+                    value
+                )
+
+                if action_result.get("status") == "completed":
+
+                    response = action_result.get(
+                        "result",
+                        f"Completed: {value}"
+                    )
+
+                    self.memory.remember_conversation(
+                        "aura",
+                        response
+                    )
+
+                    return response
+
+            # Other system commands remain on existing
+            # SystemManager path for now.
+            result = self.system.execute(text)
+
+            if result:
+
+                self.memory.remember_conversation(
+                    "aura",
+                    result
+                )
+
+                return result
         # Save user's name
         if intent == "memory_save_name":
 
