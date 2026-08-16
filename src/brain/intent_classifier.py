@@ -33,6 +33,15 @@ class IntentClassifier:
         # Automatic Fact Detection
         elif text.startswith("my ") and " is " in text:
             return "memory_auto_save"
+                    # Task Commands
+        elif (
+            text.startswith("create a task ")
+            or text.startswith("plan ")
+            or text.startswith("build ")
+            or text.startswith("make ")
+            or text.startswith("do ")
+        ):
+            return "task"
 
         # System / Action Commands
         elif (

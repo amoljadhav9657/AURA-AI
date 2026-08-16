@@ -1,3 +1,4 @@
+from src.task.task_manager import TaskManager
 from .intent_classifier import IntentClassifier
 from .decision_engine import DecisionEngine
 from src.memory.memory_manager import MemoryManager
@@ -14,6 +15,7 @@ class Brain:
         self.memory = MemoryManager()
         self.system = SystemManager()
         self.action = ActionExecutor()
+        self.task = TaskManager()
         self.context = ContextEngine(self.memory)
 
     def process(self, text):
@@ -24,6 +26,8 @@ class Brain:
             return "Please say something."
 
         self.memory.remember_conversation("user", text)
+        # System commands
+        result = self.system.execute(text)
 
                 # Detect intent
         intent = self.intent.detect(text)
