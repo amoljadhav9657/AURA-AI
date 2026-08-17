@@ -8,8 +8,34 @@ class TaskManager:
         self.planner = TaskPlanner()
         self.executor = TaskExecutor()
 
+    def normalize_task(self, task):
+        task = task.strip()
+
+        prefixes = [
+            "create a task ",
+            "create task ",
+            "add a task ",
+            "new task "
+        ]
+
+        lower_task = task.lower()
+
+        for prefix in prefixes:
+            if lower_task.startswith(prefix):
+                return task[len(prefix):].strip()
+
+        return task
+
     def create_and_start(self, task):
         if not task or not task.strip():
+            return {
+                "status": "error",
+                "message": "Task cannot be empty."
+            }
+
+        task = self.normalize_task(task)
+
+        if not task:
             return {
                 "status": "error",
                 "message": "Task cannot be empty."

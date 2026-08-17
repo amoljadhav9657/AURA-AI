@@ -33,6 +33,94 @@ class Brain:
         intent = self.intent.detect(text)
 
         # ---------------------------------------------------------
+        # v0.27.0 - Task Intelligence Routing
+        # ---------------------------------------------------------
+                # ---------------------------------------------------------
+        # v0.27.0 - Task Lifecycle
+        # ---------------------------------------------------------
+
+        if intent == "task_status":
+
+            status = self.task.get_status()
+
+            executor = status["executor"]
+            current_task = executor["task"]
+            task_status = executor["status"]
+
+            if current_task:
+
+                response = (
+                    f"Current task: {current_task}. "
+                    f"Status: {task_status}."
+                )
+
+            else:
+
+                response = "There is no active task."
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "task_complete":
+
+            result = self.task.complete_current()
+
+            if result.get("status") == "completed":
+
+                response = (
+                    f"Task completed: {result['task']}"
+                )
+
+            else:
+
+                response = result.get(
+                    "message",
+                    "There is no active task."
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "task":
+
+            result = self.task.create_and_start(text)
+
+            if result.get("status") == "running":
+
+                response = f"Task started: {result['task']}"
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
+                return response
+
+            response = result.get(
+                "message",
+                "Unable to start task."
+            )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        # ---------------------------------------------------------
+        # Existing v0.25.0 - Action Executor Routing
+        # ---------------------------------------------------------
+
+        # ---------------------------------------------------------
         # v0.25.0 - Action Executor Routing
         # ---------------------------------------------------------
 

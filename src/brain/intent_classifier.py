@@ -27,13 +27,31 @@ class IntentClassifier:
         elif text.startswith("remember that "):
             return "memory_save"
 
+        # Task Management Commands
+        elif (
+            "what is my task status" in text
+            or "task status" in text
+            or text == "status"
+        ):
+            return "task_status"
+
+        elif (
+            text == "complete the task"
+            or text == "complete task"
+            or text == "finish the task"
+            or text == "finish task"
+        ):
+            return "task_complete"
+
+        # Natural Memory Recall
         elif text.startswith("what is my "):
             return "memory_recall"
 
         # Automatic Fact Detection
         elif text.startswith("my ") and " is " in text:
             return "memory_auto_save"
-                    # Task Commands
+
+        # Task Commands
         elif (
             text.startswith("create a task ")
             or text.startswith("plan ")
