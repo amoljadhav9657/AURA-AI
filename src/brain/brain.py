@@ -5,6 +5,8 @@ from src.memory.memory_manager import MemoryManager
 from src.system.system_manager import SystemManager
 from src.context.context_engine import ContextEngine
 from src.action.action_executor import ActionExecutor
+from src.knowledge.knowledge_engine import KnowledgeEngine
+from src.reasoning.reasoning_engine import ReasoningEngine
 
 
 class Brain:
@@ -16,6 +18,8 @@ class Brain:
         self.system = SystemManager()
         self.action = ActionExecutor()
         self.task = TaskManager()
+        self.knowledge = KnowledgeEngine()
+        self.reasoning = ReasoningEngine(self.knowledge)
         self.context = ContextEngine(self.memory)
 
     def process(self, text):
@@ -31,6 +35,84 @@ class Brain:
 
                 # Detect intent
         intent = self.intent.detect(text)
+                # ---------------------------------------------------------
+        # v0.30.0 - Knowledge + Reasoning Routing
+        # ---------------------------------------------------------
+
+        if intent == "knowledge_learn":
+
+            fact = text
+
+            prefixes = [
+                "learn ",
+                "remember this ",
+                "store this "
+            ]
+
+            lower_text = text.lower()
+
+            for prefix in prefixes:
+                if lower_text.startswith(prefix):
+                    fact = text[len(prefix):].strip()
+                    break
+
+            result = self.knowledge.learn(
+                fact,
+                source="user",
+                confidence=1.0
+            )
+
+            response = f"I learned: {result['fact']}."
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "knowledge_query":
+
+            prefixes = [
+                "what do you know about ",
+                "tell me what you know about ",
+                "what do you know regarding "
+            ]
+
+            query = text
+            lower_text = text.lower()
+
+            for prefix in prefixes:
+                if lower_text.startswith(prefix):
+                    query = text[len(prefix):].strip()
+                    break
+
+            analysis = self.reasoning.analyze(query)
+
+            if analysis["status"] == "known":
+
+                best = analysis.get("best")
+
+                if best:
+                    response = (
+                        f"I know that {best['fact']}"
+                    )
+                else:
+                    response = (
+                        f"I know some information about {query}."
+                    )
+
+            else:
+                response = (
+                    f"I don't know anything about {query} yet."
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
 
         # ---------------------------------------------------------
         # v0.27.0 - Task Intelligence Routing

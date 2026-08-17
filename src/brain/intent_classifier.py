@@ -47,6 +47,20 @@ class IntentClassifier:
             or text.startswith("fail task step ")
         ):
             return "subtask_fail"
+                    # Knowledge Management
+        elif (
+            text.startswith("learn ")
+            or text.startswith("remember this ")
+            or text.startswith("store this ")
+        ):
+            return "knowledge_learn"
+
+        elif (
+            text.startswith("what do you know about ")
+            or text.startswith("tell me what you know about ")
+            or text.startswith("what do you know regarding ")
+        ):
+            return "knowledge_query"
 
         # Memory - Name
         elif text.startswith("my name is "):
