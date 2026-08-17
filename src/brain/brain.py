@@ -88,6 +88,174 @@ class Brain:
             )
 
             return response
+                    # ---------------------------------------------------------
+        # v0.28.0 - Natural Task Control
+        # ---------------------------------------------------------
+
+        if intent == "task_status":
+
+            status = self.task.get_status()
+
+            executor = status["executor"]
+            current_task = executor["task"]
+            task_status = executor["status"]
+
+            if current_task:
+                response = (
+                    f"Current task: {current_task}. "
+                    f"Status: {task_status}."
+                )
+            else:
+                response = "I don't have an active task."
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "task_progress":
+
+            progress = self.task.get_progress()
+
+            response = (
+                f"Task progress: "
+                f"{progress['completed']}/{progress['total']} "
+                f"completed "
+                f"({progress['progress']:.1f}%)."
+            )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "subtask_start":
+
+            try:
+                subtask_id = int(
+                    text.split()[-1]
+                )
+            except ValueError:
+                response = "Please provide a valid subtask number."
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
+                return response
+
+            result = self.task.start_subtask(subtask_id)
+
+            if result.get("status") == "error":
+                response = result["message"]
+            else:
+                response = (
+                    f"Subtask {result['id']} started: "
+                    f"{result['task']}"
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "subtask_complete":
+
+            try:
+                subtask_id = int(
+                    text.split()[-1]
+                )
+            except ValueError:
+                response = "Please provide a valid subtask number."
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
+                return response
+
+            result = self.task.complete_subtask(subtask_id)
+
+            if result.get("status") == "error":
+                response = result["message"]
+            else:
+                response = (
+                    f"Subtask {result['id']} completed: "
+                    f"{result['task']}"
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "subtask_fail":
+
+            try:
+                parts = text.split()
+                subtask_id = int(parts[2])
+                reason = " ".join(parts[3:]).strip()
+
+            except (ValueError, IndexError):
+                response = (
+                    "Use: fail subtask <number> <reason>"
+                )
+
+                self.memory.remember_conversation(
+                    "aura",
+                    response
+                )
+
+                return response
+
+            result = self.task.fail_subtask(
+                subtask_id,
+                reason
+            )
+
+            if result.get("status") == "error":
+                response = result["message"]
+            else:
+                response = (
+                    f"Subtask {result['id']} failed: "
+                    f"{result['task']}"
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
+
+        if intent == "task_complete":
+
+            result = self.task.complete_current()
+
+            if result.get("status") == "error":
+                response = result["message"]
+            else:
+                response = (
+                    f"Task completed: "
+                    f"{result['task']}"
+                )
+
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
+
+            return response
 
         if intent == "task":
 
