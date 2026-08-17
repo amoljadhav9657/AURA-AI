@@ -92,8 +92,14 @@ class Brain:
             if analysis["status"] == "known":
 
                 best = analysis.get("best")
+                conclusion = analysis.get("conclusion")
 
-                if best:
+                if best and conclusion:
+                    response = (
+                        f"I know that {best['fact']}. "
+                        f"My reasoning also found: {conclusion}"
+                    )
+                elif best:
                     response = (
                         f"I know that {best['fact']}"
                     )
