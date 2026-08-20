@@ -38,7 +38,8 @@ class Brain:
         if result:
             return result
 
-        # Detect intent        intent = self.intent.detect(text)
+        # Detect intent
+        intent = self.intent.detect(text)
                 # ---------------------------------------------------------
         # v0.30.0 - Knowledge + Reasoning Routing
         # ---------------------------------------------------------
