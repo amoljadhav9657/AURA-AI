@@ -695,26 +695,43 @@ class Brain:
 
                 return response
 
-            # =====================================================
-            # 4. SEARCH PREVIOUS CONTEXT
-            # =====================================================
 
-            relevant_context = (
-                self.context.find_relevant_context(text)
+        # =====================================================
+        # 4. SEARCH PREVIOUS CONTEXT
+        # =====================================================
+
+        relevant_context = (
+            self.context.find_relevant_context(text)
+        )
+
+        if relevant_context:
+
+            last_context = relevant_context[-1]
+
+            response = (
+                f"I remember you mentioned: "
+                f"{last_context['text']}"
             )
 
-            if relevant_context:
+            self.memory.remember_conversation(
+                "aura",
+                response
+            )
 
-                last_context = relevant_context[-1]
+            return response
 
-                response = (
-                    f"I remember you mentioned: "
-                    f"{last_context['text']}"
-                )
+        # =====================================================
+        # FINAL FALLBACK
+        # =====================================================
 
-                self.memory.remember_conversation(
-                    "aura",
-                    response
-                )
+        response = (
+            "I'm here and ready to help. "
+            "You can ask me a question or give me a task."
+        )
 
-                return response
+        self.memory.remember_conversation(
+            "aura",
+            response
+        )
+
+        return response

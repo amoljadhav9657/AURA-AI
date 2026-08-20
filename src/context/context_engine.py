@@ -47,18 +47,65 @@ class ContextEngine:
         words = text.lower().strip().split()
         relevant = []
 
-        for message in conversations:
-            if message["role"] != "user":
-                continue
+        # The current user message is already stored in memory
+        # before context search. Do not match the message against
+        # itself; only search previous user messages.
+        user_messages = [
+            message
+            for message in conversations
+            if message["role"] == "user"
+        ]
+
+        previous_messages = user_messages[:-1]
+
+        for message in previous_messages:
 
             message_text = message["text"].lower()
 
-            for word in words:
-                word = word.strip(".,!?")
+            # Do not treat a repeated standalone/unknown query
+            # as meaningful conversation context.
+            if message_text.strip() == text.lower().strip():
+                continue
 
-                if len(word) > 3 and word in message_text:
-                    relevant.append(message)
-                    break
+            meaningful_words = [
+                word.strip(".,!?")
+                for word in words
+                if len(word.strip(".,!?")) > 3
+            ]
+
+            # Require at least one meaningful overlap, but ignore
+            # generic/weak conversational words.
+            ignored_words = {
+                "hello",
+                "what",
+                "know",
+                "about",
+                "tell",
+                "this",
+                "that",
+                "really",
+                "good",
+                "help",
+                "please",
+            }
+
+            meaningful_words = [
+                word
+                for word in meaningful_words
+                if word not in ignored_words
+            ]
+
+            if not meaningful_words:
+                continue
+
+            matches = [
+                word
+                for word in meaningful_words
+                if word in message_text
+            ]
+
+            if matches:
+                relevant.append(message)
 
         return relevant
 
