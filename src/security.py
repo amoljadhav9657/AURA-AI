@@ -4,9 +4,13 @@ Version: 0.34.0
 """
 
 from urllib.parse import urlparse
+from src.face.face_auth import FaceAuthManager
 
 
 class SecurityManager:
+
+    def __init__(self):
+        self.face_auth = FaceAuthManager()
 
     MAX_INPUT_LENGTH = 2000
 
@@ -83,6 +87,7 @@ class SecurityManager:
         return hostname in self.SAFE_BROWSER_DOMAINS
 
     def check_text(self, text):
+
         valid, error = self.validate_input(text)
 
         if not valid:
@@ -95,3 +100,15 @@ class SecurityManager:
             )
 
         return True, None
+
+    def authenticate_face(self, user_id=None):
+        return self.face_auth.authenticate(user_id)
+
+    def lock_face(self):
+        self.face_auth.lock()
+
+    def is_authenticated(self):
+        return self.face_auth.is_authenticated()
+
+    def get_auth_status(self):
+        return self.face_auth.get_status()
