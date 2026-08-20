@@ -1,45 +1,15 @@
-# Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-
-# Virtual Environment
+.venv/
 venv/
 .env
+*.db
 
-# Logs
-*.log
-
-# VS Code
-.vscode/
-
-# OS Files
-.DS_Store
-Thumbs.db
-
-# Temporary Files
-*.tmpdata/aura.db
-data/
-
-# AURA development backups
-src/brain/*.backup
-src/brain/*.v018_backup
-src/brain/*.v018_brain_backup
-src/brain/*.v019_backup
-src/brain/*.v019_before_context_fix
-src/brain/*.v019_before_topic_priority
-src/brain/*.v019_final_backup
-src/brain/*.v019_indentation_backup
-src/brain/*.v019_topic_backup
-
-src/context/*.backup
-src/context/*.broken-backup
-src/context/*.v018_backup
-src/context/*.v018_fix_backup
-src/context/*.v018_state_backup
-src/context/*.v019_backup
-src/context/*.v019_find_topic_backup
-src/context/*.v019_topic_backup
-src/context/*.swp
+# Editor / temporary files
 *.swp
+*.swo
+
+# Local backup files
+*.backup
+*.broken-backup
+*.v*_backup
