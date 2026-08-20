@@ -101,6 +101,24 @@ class SecurityManager:
 
         return True, None
 
+    def requires_face_auth(self, command_type):
+        return command_type in {
+            "app",
+            "folder",
+        }
+
+    def check_protected_action(self, command_type):
+        if not self.requires_face_auth(command_type):
+            return True, None
+
+        if not self.is_authenticated():
+            return (
+                False,
+                "AURA is locked. Face authentication is required."
+            )
+
+        return True, None
+
     def authenticate_face(self, user_id=None):
         return self.face_auth.authenticate(user_id)
 

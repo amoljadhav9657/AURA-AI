@@ -1,61 +1,60 @@
 """
-=========================================
-AURA AI - Face Authentication Foundation
-Version: 0.35.0
-=========================================
+AURA AI Face Authentication Manager
+Version: 0.36.0
 """
 
-from enum import Enum
-
-
-class AuthStatus(Enum):
-    AUTHORIZED = "authorized"
-    DENIED = "denied"
-    LOCKED = "locked"
+from .face_detector import FaceDetector
+from .face_recognizer import FaceRecognizer
 
 
 class FaceAuthManager:
 
     def __init__(self):
-        self.status = AuthStatus.LOCKED
-        self.authorized_user = None
+        self.detector = FaceDetector()
+        self.recognizer = FaceRecognizer()
 
-    def authenticate(self, user_id=None):
-        """
-        Foundation/mock authentication.
+        self.authenticated = False
+        self.user = None
+        self.status = "locked"
 
-        Actual camera + face recognition will be
-        connected later without changing this interface.
-        """
-
+    def enroll(self, user_id):
         if not user_id:
-            self.status = AuthStatus.DENIED
-            self.authorized_user = None
-            return {
-                "authenticated": False,
-                "status": self.status.value,
-                "user": None,
-            }
+            return False
 
-        self.status = AuthStatus.AUTHORIZED
-        self.authorized_user = user_id
+        return self.recognizer.enroll(user_id)
 
-        return {
-            "authenticated": True,
-            "status": self.status.value,
-            "user": user_id,
-        }
+    def authenticate(self, detected_user=None):
+        if not self.recognizer.enrolled:
+            self.authenticated = False
+            self.user = None
+            self.status = "denied"
+
+            return self.get_status()
+
+        result = self.recognizer.recognize(detected_user)
+
+        if result["recognized"]:
+            self.authenticated = True
+            self.user = result["user"]
+            self.status = "authorized"
+        else:
+            self.authenticated = False
+            self.user = None
+            self.status = "denied"
+
+        return self.get_status()
 
     def lock(self):
-        self.status = AuthStatus.LOCKED
-        self.authorized_user = None
+        self.authenticated = False
+        self.user = None
+        self.status = "locked"
 
     def is_authenticated(self):
-        return self.status == AuthStatus.AUTHORIZED
+        return self.authenticated
 
     def get_status(self):
         return {
-            "authenticated": self.is_authenticated(),
-            "status": self.status.value,
-            "user": self.authorized_user,
+            "authenticated": self.authenticated,
+            "status": self.status,
+            "user": self.user,
         }

@@ -32,6 +32,14 @@ class SystemManager:
 
         command_type, value = self.parser.parse(text)
 
+        # Face authentication gate for protected actions
+        protected, error = self.security.check_protected_action(
+            command_type
+        )
+
+        if not protected:
+            return error
+
         # Web Search commands
         if command_type == "search":
             return self.search.search(value)
