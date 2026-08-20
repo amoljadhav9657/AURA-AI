@@ -1,6 +1,6 @@
 """
 AURA AI Face Recognizer
-Version: 0.36.0
+Version: 0.37.1
 """
 
 
@@ -9,6 +9,10 @@ class FaceRecognizer:
     def __init__(self):
         self.authorized_user = None
         self.enrolled = False
+        self.available = True
+
+    def is_available(self):
+        return self.available
 
     def enroll(self, user_id):
         if not user_id:

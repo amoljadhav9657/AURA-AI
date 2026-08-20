@@ -30,6 +30,7 @@ class Brain:
             return "Please say something."
 
         self.memory.remember_conversation("user", text)
+
         # System commands
         result = self.system.execute(text)
 

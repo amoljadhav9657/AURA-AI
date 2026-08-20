@@ -13,3 +13,7 @@ venv/
 *.backup
 *.broken-backup
 *.v*_backup
+
+# AURA biometric face data
+data/face/
+*.npy

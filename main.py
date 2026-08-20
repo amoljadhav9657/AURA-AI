@@ -1,7 +1,7 @@
 """
 =========================================
 AURA AI
-Version : 0.7.0
+Version : 0.37.0
 Founder : Amol Jadhav
 =========================================
 """
@@ -9,17 +9,57 @@ Founder : Amol Jadhav
 from src.brain import Brain
 from src.voice.voice_manager import VoiceManager
 from src.config import APP_NAME, VERSION
+from src.face.face_auth import FaceAuthManager
 
 
 class AuraAI:
 
     def __init__(self):
-        self.brain = Brain()
-        self.voice = VoiceManager()
+        # Face authentication MUST happen before AURA components are created.
+        self.face_auth = FaceAuthManager()
+
+        self.brain = None
+        self.voice = None
+
+    def authenticate_startup(self):
+
+        print("\n" + "=" * 60)
+        print("🔐 AURA AI SECURITY")
+        print("=" * 60)
+
+        print("📷 Camera / Face Authentication required.")
+        print("AURA will remain LOCKED until the authorized face is verified.")
+
+        # Do not allow a startup bypass.
+        if not self.face_auth.is_available():
+            print("\n❌ AURA LOCKED")
+            print("Face authentication system is not available.")
+            return False
+
+        result = self.face_auth.authenticate()
+
+        if not result.get("authenticated", False):
+            print("\n❌ AURA LOCKED")
+            print("Face authentication failed.")
+            return False
+
+        print("\n✅ FACE AUTHENTICATED")
+        print(f"👤 User : {result.get('user')}")
+        print("🔓 AURA UNLOCKED")
+
+        return True
 
     def start(self):
 
-        print("=" * 60)
+        # SECURITY GATE
+        if not self.authenticate_startup():
+            return
+
+        # Only create Brain / Voice after successful authentication.
+        self.brain = Brain()
+        self.voice = VoiceManager()
+
+        print("\n" + "=" * 60)
         print(f"🤖 Welcome to {APP_NAME}")
         print(f"Version : {VERSION}")
         print("=" * 60)
@@ -49,6 +89,7 @@ class AuraAI:
 
             if user_input.lower() == "exit":
                 print("AURA : Goodbye!")
+                self.face_auth.lock()
                 break
 
             response = self.brain.process(user_input)
@@ -71,6 +112,7 @@ class AuraAI:
 
             if user_input.lower() == "exit":
                 self.voice.speak("Goodbye!")
+                self.face_auth.lock()
                 break
 
             response = self.brain.process(user_input)
