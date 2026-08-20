@@ -10,6 +10,7 @@ from .command_parser import CommandParser
 from .app_launcher import AppLauncher
 from .file_manager import FileManager
 from .search_manager import SearchManager
+from src.security import SecurityManager
 
 
 class SystemManager:
@@ -20,8 +21,14 @@ class SystemManager:
         self.apps = AppLauncher()
         self.files = FileManager()
         self.search = SearchManager()
+        self.security = SecurityManager()
 
     def execute(self, text):
+
+        allowed, error = self.security.check_text(text)
+
+        if not allowed:
+            return error
 
         command_type, value = self.parser.parse(text)
 
@@ -31,8 +38,11 @@ class SystemManager:
 
         # Browser commands
         if command_type == "browser":
-            return self.browser.open(value)
 
+            if not self.security.is_allowed_browser_url(value):
+                return "I can't open that website because it isn't on AURA's safe list."
+
+            return self.browser.open(value)
         # App commands
         if command_type == "app":
             return self.apps.open(value)

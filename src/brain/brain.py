@@ -33,8 +33,11 @@ class Brain:
         # System commands
         result = self.system.execute(text)
 
-                # Detect intent
-        intent = self.intent.detect(text)
+        # Security / system execution result
+        if result:
+            return result
+
+        # Detect intent        intent = self.intent.detect(text)
                 # ---------------------------------------------------------
         # v0.30.0 - Knowledge + Reasoning Routing
         # ---------------------------------------------------------
