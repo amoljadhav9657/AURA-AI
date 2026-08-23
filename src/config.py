@@ -14,7 +14,7 @@ FOUNDER = "Amol Jadhav"
 DEBUG = True
 
 # Voice
-VOICE_ENABLED = False
+VOICE_ENABLED = True
 
 # Database
 DATABASE_PATH = "data/aura.db"

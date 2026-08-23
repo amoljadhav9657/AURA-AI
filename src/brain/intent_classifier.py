@@ -5,17 +5,38 @@ class IntentClassifier:
         text = text.lower().strip()
 
         # Greeting
-        if text in ["hello", "hi", "hey"]:
+        if (
+            text in ["hello", "hi", "hey"]
+            or text.startswith("hello aura")
+            or text.startswith("hi aura")
+            or text.startswith("hey aura")
+            or text.startswith("good morning")
+            or text.startswith("good afternoon")
+            or text.startswith("good evening")
+        ):
             return "greeting"
+
+        # Web / Current Information
+        elif (
+            "latest" in text
+            or "current news" in text
+            or "current affairs" in text
+            or "today's news" in text
+            or "today news" in text
+            or "recent news" in text
+            or "breaking news" in text
+            or "latest news" in text
+            or "news today" in text
+        ):
+            return "web_search"
 
         # Time
         elif "time" in text:
-            return "time"
-
-        # Date
+            return "time"        # Date
         elif "date" in text:
             return "date"
-                    # Task Management
+
+        # Task Management
         elif (
             "what is my task status" in text
             or "task status" in text
@@ -47,7 +68,8 @@ class IntentClassifier:
             or text.startswith("fail task step ")
         ):
             return "subtask_fail"
-                    # Knowledge Management
+
+        # Knowledge Management
         elif (
             text.startswith("learn ")
             or text.startswith("remember this ")
@@ -79,40 +101,6 @@ class IntentClassifier:
         # Automatic Fact Detection
         elif text.startswith("my ") and " is " in text:
             return "memory_auto_save"
-
-        # Task Management
-        elif (
-            "task progress" in text
-            or "my task progress" in text
-            or "progress of my task" in text
-        ):
-            return "task_progress"
-
-        elif (
-            text.startswith("start subtask ")
-            or text.startswith("start task step ")
-        ):
-            return "subtask_start"
-
-        elif (
-            text.startswith("complete subtask ")
-            or text.startswith("complete task step ")
-        ):
-            return "subtask_complete"
-
-        elif (
-            text.startswith("fail subtask ")
-            or text.startswith("fail task step ")
-        ):
-            return "subtask_fail"
-
-        # Task Status
-        elif (
-            "what is my task status" in text
-            or "task status" in text
-            or text == "status"
-        ):
-            return "task_status"
 
         # Complete Main Task
         elif (

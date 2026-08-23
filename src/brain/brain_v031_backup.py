@@ -145,7 +145,6 @@ Rules:
                 "aura",
                 response
             )
-            return response
 
             # ---------------------------------------------------------
             # v0.27.0 - Task Intelligence Routing

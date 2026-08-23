@@ -1,4 +1,3 @@
-from src.ai.gemini_provider import GeminiProvider
 from src.task.task_manager import TaskManager
 from .intent_classifier import IntentClassifier
 from .decision_engine import DecisionEngine
@@ -8,7 +7,6 @@ from src.context.context_engine import ContextEngine
 from src.action.action_executor import ActionExecutor
 from src.knowledge.knowledge_engine import KnowledgeEngine
 from src.reasoning.reasoning_engine import ReasoningEngine
-from src.web.web_intelligence import WebIntelligence
 
 
 class Brain:
@@ -23,8 +21,6 @@ class Brain:
         self.knowledge = KnowledgeEngine()
         self.reasoning = ReasoningEngine(self.knowledge)
         self.context = ContextEngine(self.memory)
-        self.ai = GeminiProvider()
-        self.web = WebIntelligence()
 
     def process(self, text):
 
@@ -45,50 +41,33 @@ class Brain:
         # Detect intent
         intent = self.intent.detect(text)
                 # ---------------------------------------------------------
-        # v0.31.0 - Web Intelligence Routing
+        # v0.30.0 - Knowledge + Reasoning Routing
         # ---------------------------------------------------------
 
-        if intent == "web_search":
+        if intent == "knowledge_learn":
 
-            web_results = self.web.search(
-                text,
-                max_results=5
+            fact = text
+
+            prefixes = [
+                "learn ",
+                "remember this ",
+                "store this "
+            ]
+
+            lower_text = text.lower()
+
+            for prefix in prefixes:
+                if lower_text.startswith(prefix):
+                    fact = text[len(prefix):].strip()
+                    break
+
+            result = self.knowledge.learn(
+                fact,
+                source="user",
+                confidence=1.0
             )
 
-            if web_results and not web_results.startswith(
-                "Web search failed"
-            ):
-
-                prompt = f"""
-You are AURA AI's web intelligence layer.
-
-User question:
-{text}
-
-Fresh web search results:
-{web_results}
-
-Answer the user's question using the fresh web results.
-
-Rules:
-- Do not invent facts.
-- Prefer information supported by the search results.
-- Give a concise but useful answer.
-- If the search results are insufficient, clearly say so.
-- Mention important sources when appropriate.
-"""
-
-                try:
-                    response = self.ai.answer(prompt)
-
-                except Exception:
-                    response = web_results
-
-            else:
-                response = (
-                    "I could not retrieve fresh information "
-                    "from the web right now."
-                )
+            response = f"I learned: {result['fact']}."
 
             self.memory.remember_conversation(
                 "aura",
@@ -96,6 +75,7 @@ Rules:
             )
 
             return response
+
         if intent == "knowledge_query":
 
             prefixes = [
@@ -145,7 +125,6 @@ Rules:
                 "aura",
                 response
             )
-            return response
 
             # ---------------------------------------------------------
             # v0.27.0 - Task Intelligence Routing
@@ -744,69 +723,15 @@ Rules:
             )
 
             return response
-    # =====================================================
-        # WEB INTELLIGENCE
-        # =====================================================
-
-        web_keywords = [
-            "latest",
-            "current",
-            "today",
-            "news",
-            "current affairs",
-            "recent",
-            "breaking"
-        ]
-
-        if any(keyword in lower_text for keyword in web_keywords):
-
-            web_results = self.web.search(text, 5)
-
-            if web_results and not web_results.startswith("Web search failed"):
-
-                prompt = f"""
-You are AURA AI.
-
-Use the following fresh web search results to answer the user's question.
-
-USER QUESTION:
-{text}
-
-WEB RESULTS:
-{web_results}
-
-Instructions:
-- Give a clear and useful answer.
-- Use the latest information available in the results.
-- Do not invent facts.
-- If the results are insufficient, say so.
-- Mention important sources when appropriate.
-"""
-
-                try:
-                    response = self.ai.answer(prompt)
-
-                except Exception:
-                    response = web_results
-
-                self.memory.remember_conversation(
-                    "aura",
-                    response
-                )
-
-                return response
 
         # =====================================================
-        # FINAL FALLBACK - GEMINI INTELLIGENCE
+        # FINAL FALLBACK
         # =====================================================
 
-        try:
-            response = self.ai.answer(text)
-
-        except Exception:
-            response = (
-                "I'm unable to connect to my AI intelligence service right now."
-            )
+        response = (
+            "I'm here and ready to help. "
+            "You can ask me a question or give me a task."
+        )
 
         self.memory.remember_conversation(
             "aura",

@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from src.brain.brain import Brain
 from src.core.orchestrator import Orchestrator
+from src.voice.voice_manager import VoiceManager
 
 
 CYAN = "#35dfff"
@@ -42,6 +43,7 @@ class AuraHUD(QMainWindow):
 
         self.brain = Brain()
         self.orchestrator = Orchestrator(self.brain)
+        self.voice = VoiceManager()
         
         self.setup_ui()
         self.setup_timer()
@@ -250,6 +252,29 @@ class AuraHUD(QMainWindow):
         self.command.returnPressed.connect(self.process_command)
 
         command_layout.addWidget(self.command)
+                # Voice Listen Button
+        listen = QPushButton("🎤 LISTEN")
+        listen.setCursor(Qt.PointingHandCursor)
+        listen.clicked.connect(self.process_voice_command)
+
+        listen.setStyleSheet(
+            f"""
+            QPushButton {{
+                background: transparent;
+                color: {CYAN};
+                border: 1px solid {CYAN};
+                padding: 8px 18px;
+                font-weight: bold;
+            }}
+
+            QPushButton:hover {{
+                background: {CYAN};
+                color: {DARK};
+            }}
+            """
+        )
+
+        command_layout.addWidget(listen)
 
         send = QPushButton("EXECUTE")
         send.setCursor(Qt.PointingHandCursor)
@@ -321,6 +346,99 @@ class AuraHUD(QMainWindow):
         )
 
         return label
+    def process_voice_command(self):
+
+        self.mode.setText("LISTENING")
+        self.core_info.setText(
+            "LISTENING...\n\n"
+            "SPEAK NOW"
+        )
+        self.status_voice.setText("VOICE       LISTENING")
+        self.activity.setText(
+            "AURA microphone active...\n\n"
+            "Listening for command..."
+        )
+
+        try:
+            command = self.voice.listen()
+
+            if not command:
+                self.mode.setText("AURA CORE")
+                self.core_info.setText(
+                    "SYSTEM READY\n\n"
+                    "NO COMMAND DETECTED"
+                )
+                self.status_voice.setText("VOICE       STANDBY")
+                self.activity.setText(
+                    "No voice command detected."
+                )
+                return
+
+            self.command.setText(command)
+
+            self.mode.setText("THINKING")
+            self.core_info.setText(
+                f'PROCESSING...\n\n"{command}"'
+            )
+
+            self.activity.setText(
+                f"VOICE COMMAND:\n{command}\n\n"
+                "AURA processing request..."
+            )
+
+            self.status_voice.setText(
+                "VOICE       PROCESSING"
+            )
+            self.status_brain.setText(
+                "BRAIN       THINKING"
+            )
+
+            response = self.orchestrator.handle(command)
+
+            self.mode.setText("AURA CORE")
+
+            self.core_info.setText(
+                "SYSTEM READY\n\n"
+                "VOICE RESPONSE GENERATED"
+            )
+
+            self.activity.setText(
+                f"VOICE COMMAND:\n{command}\n\n"
+                f"AURA:\n{response}"
+            )
+
+            self.status_brain.setText(
+                "BRAIN       READY"
+            )
+            self.status_voice.setText(
+                "VOICE       SPEAKING"
+            )
+
+            self.voice.speak(response)
+
+            self.status_voice.setText(
+                "VOICE       STANDBY"
+            )
+
+        except Exception as exc:
+
+            self.mode.setText("ERROR")
+
+            self.core_info.setText(
+                "VOICE PROCESSING ERROR"
+            )
+
+            self.activity.setText(
+                f"VOICE ERROR:\n{exc}"
+            )
+
+            self.status_brain.setText(
+                "BRAIN       READY"
+            )
+
+            self.status_voice.setText(
+                "VOICE       ERROR"
+            )
 
     # ---------------------------------------------------------
     # Commands
