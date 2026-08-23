@@ -17,3 +17,4 @@ venv/
 # AURA biometric face data
 data/face/
 *.npy
+.env
