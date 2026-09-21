@@ -1,7 +1,7 @@
 ﻿"""
 =========================================
 AURA AI - Speech To Text
-Version : 0.7.0
+Version : 0.8.0
 =========================================
 """
 
@@ -129,3 +129,44 @@ class SpeechToText:
                     )
 
                     return False
+
+    def listen_command_fast(self):
+
+        with sr.Microphone(
+            device_index=self.device_index
+        ) as source:
+
+            print("🎤 Listening...")
+
+            audio = self.recognizer.listen(
+                source,
+                timeout=5,
+                phrase_time_limit=8
+            )
+
+        try:
+
+            text = self.recognizer.recognize_google(
+                audio,
+                language="en-IN"
+            ).strip()
+
+            if not text:
+                return ""
+
+            print("You :", text)
+
+            return text
+
+        except sr.UnknownValueError:
+
+            print("⚠️ Could not understand audio.")
+            return ""
+
+        except sr.RequestError as exc:
+
+            print(
+                f"⚠️ Speech recognition service error: {exc}"
+            )
+
+            return ""

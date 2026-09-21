@@ -13,7 +13,10 @@ class Database:
 
         self.db_path = os.path.join(db_folder, "aura.db")
 
-        self.conn = sqlite3.connect(self.db_path)
+        self.conn = sqlite3.connect(
+            self.db_path,
+            check_same_thread=False
+        )
         self.cursor = self.conn.cursor()
 
         self.create_tables()

@@ -29,6 +29,7 @@ class Brain:
     def process(self, text):
 
         text = text.strip()
+        lower_text = text.lower().strip()
 
         if not text:
             return "Please say something."

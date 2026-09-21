@@ -1,21 +1,50 @@
+# Python
 __pycache__/
 *.py[cod]
+*.pyo
+
+# Virtual environment
 .venv/
 venv/
+env/
+
+# Environment / secrets
 .env
+.env.*
+!.env.example
+
+# Generated workspace
+workspace/
+
+# Local data
+data/
 *.db
+*.sqlite
+*.sqlite3
 
-# Editor / temporary files
-*.swp
-*.swo
-
-# Local backup files
-*.backup
-*.broken-backup
-*.v*_backup
-
-# AURA biometric face data
-data/face/
-*.npy
-.env
+# Audio / voice test files
 *.wav
+*.mp3
+
+# Backup files
+*_backup.py
+*_backup_*.py
+*_BEFORE_*.py
+*_WORKING.py
+*.v040_backup
+
+# Temporary test scripts
+*aura_*_test.py
+*_*_test.py
+test_*.py
+wake_stt*.py
+openwake_*.py
+mic_level_test.py
+pure_stt_test.py
+google_stt_test.py
+device1_wake_test.py
+voice_e2e*.py
+
+# OS
+.DS_Store
+Thumbs.db

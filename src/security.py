@@ -102,11 +102,7 @@ class SecurityManager:
         return True, None
 
     def requires_face_auth(self, command_type):
-        return command_type in {
-            "app",
-            "folder",
-        }
-
+    	return False
     def check_protected_action(self, command_type):
         if not self.requires_face_auth(command_type):
             return True, None
