@@ -3,9 +3,9 @@
     def __init__(self, provider=None):
         self.provider = provider
 
-    # --------------------------------------------------
+    # ==================================================
     # NORMALIZE AI RESPONSE
-    # --------------------------------------------------
+    # ==================================================
 
     def _normalize(self, result):
 
@@ -32,6 +32,11 @@
             if not isinstance(content, str):
                 content = str(content)
 
+            path = path.replace("\\", "/").strip("/")
+
+            if not path:
+                continue
+
             normalized[path] = content
 
         if not normalized:
@@ -41,9 +46,118 @@
 
         return normalized
 
-    # --------------------------------------------------
+    # ==================================================
+    # PROJECT STRUCTURE VALIDATION
+    # ==================================================
+
+    def validate_generated_structure(
+        self,
+        files,
+        requirements=None,
+        architecture=None
+    ):
+
+        errors = []
+
+        file_paths = set(files.keys())
+
+        # --------------------------------------------------
+        # MAIN APPLICATION FILE
+        # --------------------------------------------------
+
+        has_main = any(
+            path in {
+                "main.py",
+                "app.py",
+                "run.py",
+                "src/main.py"
+            }
+            for path in file_paths
+        )
+
+        if not has_main:
+            errors.append({
+                "type": "missing_required_file",
+                "file": "main.py",
+                "error": (
+                    "Generated project does not contain a main "
+                    "application entry point."
+                )
+            })
+
+        # --------------------------------------------------
+        # REQUIREMENTS
+        # --------------------------------------------------
+
+        if "requirements.txt" not in file_paths:
+            errors.append({
+                "type": "missing_required_file",
+                "file": "requirements.txt",
+                "error": (
+                    "Generated project must contain "
+                    "requirements.txt."
+                )
+            })
+
+        # --------------------------------------------------
+        # FUNCTIONAL TESTS
+        # --------------------------------------------------
+
+        test_files = [
+            path
+            for path in file_paths
+            if (
+                path.startswith("tests/")
+                and path.endswith(".py")
+                and (
+                    path.split("/")[-1].startswith("test_")
+                    or path.split("/")[-1].endswith("_test.py")
+                )
+            )
+            or (
+                path.endswith("_test.py")
+                or path.startswith("test_")
+            )
+        ]
+
+        if not test_files:
+            errors.append({
+                "type": "missing_functional_tests",
+                "file": "tests/",
+                "error": (
+                    "No functional test files were generated. "
+                    "At least one test_*.py or *_test.py file "
+                    "is required."
+                )
+            })
+
+        # --------------------------------------------------
+        # REQUIRE TEST DIRECTORY
+        # --------------------------------------------------
+
+        has_tests_directory = any(
+            path.startswith("tests/")
+            for path in file_paths
+        )
+
+        if not has_tests_directory:
+            errors.append({
+                "type": "missing_test_directory",
+                "file": "tests/",
+                "error": (
+                    "Generated project must contain a tests "
+                    "directory with functional tests."
+                )
+            })
+
+        return {
+            "passed": not errors,
+            "errors": errors
+        }
+
+    # ==================================================
     # GENERATE
-    # --------------------------------------------------
+    # ==================================================
 
     def generate(
         self,
@@ -60,16 +174,29 @@
                 architecture=architecture
             )
 
-            return self._normalize(result)
+            files = self._normalize(result)
+
+            structure = self.validate_generated_structure(
+                files=files,
+                requirements=requirements,
+                architecture=architecture
+            )
+
+            if not structure["passed"]:
+
+                # Do not silently accept incomplete AI output.
+                return files
+
+            return files
 
         return self._fallback_generation(
             task,
             architecture
         )
 
-    # --------------------------------------------------
+    # ==================================================
     # FIX
-    # --------------------------------------------------
+    # ==================================================
 
     def fix(
         self,
@@ -92,13 +219,24 @@
 
             fixed_files = self._normalize(result)
 
-            return fixed_files
+            # --------------------------------------------------
+            # IMPORTANT:
+            # AI may return only changed files.
+            # Existing files must be preserved.
+            # --------------------------------------------------
+
+            merged = dict(files)
+
+            for path, content in fixed_files.items():
+                merged[path] = content
+
+            return merged
 
         return files
 
-    # --------------------------------------------------
+    # ==================================================
     # FALLBACK
-    # --------------------------------------------------
+    # ==================================================
 
     def _fallback_generation(
         self,
@@ -107,6 +245,10 @@
     ):
 
         project_type = architecture["type"]
+
+        # ==================================================
+        # WEBSITE
+        # ==================================================
 
         if project_type == "website":
 
@@ -118,10 +260,12 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
+
     return "AURA AI Generated Website"
 
 
 if __name__ == "__main__":
+
     app.run()
 """,
 
@@ -140,24 +284,32 @@ def test_home():
 """
             }
 
+        # ==================================================
+        # SOFTWARE
+        # ==================================================
+
         if project_type == "software":
 
             return {
                 "main.py": """def add(a, b):
+
     return a + b
 
 
 def subtract(a, b):
+
     return a - b
 
 
 def multiply(a, b):
+
     return a * b
 
 
 def divide(a, b):
 
     if b == 0:
+
         raise ValueError("Cannot divide by zero")
 
     return a / b
@@ -169,6 +321,7 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
 """,
 
@@ -203,6 +356,10 @@ def test_division():
 """
             }
 
+        # ==================================================
+        # EXCEL
+        # ==================================================
+
         if project_type == "excel":
 
             return {
@@ -227,6 +384,7 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
 """,
 
@@ -244,6 +402,10 @@ def test_dataframe():
     assert "Value" in df.columns
 """
             }
+
+        # ==================================================
+        # DATABASE
+        # ==================================================
 
         if project_type == "database":
 
@@ -277,6 +439,7 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
 """,
 
@@ -304,6 +467,10 @@ def test_database():
 """
             }
 
+        # ==================================================
+        # GENERAL
+        # ==================================================
+
         return {
             "main.py": """def main():
 
@@ -311,6 +478,7 @@ def test_database():
 
 
 if __name__ == "__main__":
+
     main()
 """,
 

@@ -8,11 +8,35 @@
         debugger,
         max_iterations=3
     ):
+
         self.generator = generator
         self.builder = builder
         self.test_engine = test_engine
         self.debugger = debugger
         self.max_iterations = max_iterations
+
+    # ==================================================
+    # STRUCTURE VALIDATION
+    # ==================================================
+
+    def _structure_errors(
+        self,
+        files,
+        requirements,
+        architecture
+    ):
+
+        result = self.generator.validate_generated_structure(
+            files=files,
+            requirements=requirements,
+            architecture=architecture
+        )
+
+        return result["errors"]
+
+    # ==================================================
+    # DEVELOPMENT LOOP
+    # ==================================================
 
     def execute(
         self,
@@ -24,9 +48,9 @@
 
         history = []
 
-        # -------------------------
-        # INITIAL CODE GENERATION
-        # -------------------------
+        # ==================================================
+        # INITIAL AI GENERATION
+        # ==================================================
 
         files = self.generator.generate(
             task=task,
@@ -39,35 +63,82 @@
             files
         )
 
-        # -------------------------
-        # AUTONOMOUS DEVELOPMENT LOOP
-        # -------------------------
+        # ==================================================
+        # AUTONOMOUS DEVELOPMENT
+        # ==================================================
 
         for iteration in range(
             1,
             self.max_iterations + 1
         ):
 
+            # --------------------------------------------------
+            # STRUCTURE CHECK
+            # --------------------------------------------------
+
+            structure_errors = self._structure_errors(
+                files=files,
+                requirements=requirements,
+                architecture=architecture
+            )
+
+            # --------------------------------------------------
+            # CODE / TEST VALIDATION
+            # --------------------------------------------------
+
             validation = self.test_engine.validate(
                 project_path
             )
+
+            # --------------------------------------------------
+            # DEBUGGER
+            # --------------------------------------------------
 
             debug = self.debugger.analyze(
                 validation
             )
 
+            # --------------------------------------------------
+            # COMBINE STRUCTURE ERRORS + TEST ERRORS
+            # --------------------------------------------------
+
+            all_errors = []
+
+            all_errors.extend(
+                structure_errors
+            )
+
+            all_errors.extend(
+                debug.get("errors", [])
+            )
+
+            overall_passed = (
+                validation["overall_passed"]
+                and not structure_errors
+            )
+
             history.append({
+
                 "iteration": iteration,
-                "files": created,
+
+                "files": list(files.keys()),
+
+                "created": created,
+
+                "structure_errors": structure_errors,
+
                 "validation": validation,
-                "debug": debug
+
+                "debug": debug,
+
+                "overall_passed": overall_passed
             })
 
-            # -------------------------
+            # ==================================================
             # SUCCESS
-            # -------------------------
+            # ==================================================
 
-            if validation["overall_passed"]:
+            if overall_passed:
 
                 return {
                     "status": "success",
@@ -75,29 +146,43 @@
                     "history": history
                 }
 
-            # -------------------------
+            # ==================================================
             # MAX ITERATIONS
-            # -------------------------
+            # ==================================================
 
             if iteration >= self.max_iterations:
+
                 break
 
-            # -------------------------
-            # BUILD FIX REQUEST
-            # -------------------------
+            # ==================================================
+            # BUILD AI FIX REQUEST
+            # ==================================================
 
-            fix_request = self.debugger.build_fix_request(
-                debug["errors"]
-            )
+            fix_errors = list(all_errors)
 
-            if not fix_request:
+            if not fix_errors:
+
                 break
 
-            # -------------------------
-            # AI FIX
-            # -------------------------
+            fix_request = {
 
-            files = self.generator.fix(
+                "instruction": (
+                    "Repair the generated project completely. "
+                    "Preserve working functionality. "
+                    "Do not remove or weaken existing tests. "
+                    "Add every missing required file and "
+                    "functional test. "
+                    "Return complete changed files."
+                ),
+
+                "errors": fix_errors
+            }
+
+            # ==================================================
+            # AI REPAIR
+            # ==================================================
+
+            fixed_files = self.generator.fix(
                 task=task,
                 requirements=requirements,
                 architecture=architecture,
@@ -105,18 +190,20 @@
                 errors=fix_request
             )
 
-            # -------------------------
-            # REBUILD
-            # -------------------------
+            # ==================================================
+            # REBUILD PROJECT
+            # ==================================================
+
+            files = fixed_files
 
             created = self.builder.build(
                 project_path,
                 files
             )
 
-        # -------------------------
+        # ==================================================
         # FAILED
-        # -------------------------
+        # ==================================================
 
         return {
             "status": "failed",

@@ -1,10 +1,13 @@
 ﻿import os
 
+from dotenv import load_dotenv
+
 from src.ai_coding.providers import (
     MockProvider,
     OpenAIProvider,
     GeminiProvider
 )
+
 from .task_analyzer import TaskAnalyzerV2
 from .architect import Architect
 from .ai_codegen import AICodeGenerator
@@ -15,6 +18,13 @@ from .debugger import Debugger
 from .development_loop import DevelopmentLoop
 
 
+# ==================================================
+# LOAD AURA ENVIRONMENT
+# ==================================================
+
+load_dotenv()
+
+
 class DeveloperEngineV2:
 
     def __init__(
@@ -22,6 +32,10 @@ class DeveloperEngineV2:
         workspace="workspace",
         provider=None
     ):
+
+        # ==================================================
+        # AI PROVIDER
+        # ==================================================
 
         if provider is None:
 
@@ -31,9 +45,16 @@ class DeveloperEngineV2:
             ).lower() == "true"
 
             if use_real_ai:
+
                 provider = GeminiProvider()
+
             else:
+
                 provider = MockProvider()
+
+        # ==================================================
+        # CORE MODULES
+        # ==================================================
 
         self.analyzer = TaskAnalyzerV2()
 
@@ -55,13 +76,26 @@ class DeveloperEngineV2:
 
         self.debugger = Debugger()
 
+        # ==================================================
+        # AUTONOMOUS DEVELOPMENT LOOP
+        # ==================================================
+
         self.loop = DevelopmentLoop(
+
             generator=self.generator,
+
             builder=self.builder,
+
             test_engine=self.test_engine,
+
             debugger=self.debugger,
+
             max_iterations=3
-        )        
+        )
+
+    # ==================================================
+    # DEVELOP PROJECT
+    # ==================================================
 
     def develop(
         self,
@@ -84,18 +118,27 @@ class DeveloperEngineV2:
         )
 
         result = self.loop.execute(
-    	    task=task,
-    	    requirements=analysis,
-   	    architecture=architecture,
-    	    project_path=project_path
-	)
+
+            task=task,
+
+            requirements=analysis,
+
+            architecture=architecture,
+
+            project_path=project_path
+        )
 
         return {
+
             "task": task,
+
             "analysis": analysis,
+
             "architecture": architecture,
+
             "project_path": str(
                 project_path.resolve()
             ),
+
             "result": result
         }

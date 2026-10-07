@@ -7,6 +7,10 @@ from google import genai
 from .base_provider import AIProvider
 
 
+class GeminiRateLimitError(RuntimeError):
+    """Raised when Gemini API rate limits or quota limits are reached."""
+
+
 class GeminiProvider(AIProvider):
 
     def __init__(self):
@@ -28,6 +32,38 @@ class GeminiProvider(AIProvider):
         )
 
         self.max_retries = 3
+
+    # ==================================================
+    # RATE LIMIT DETECTION
+    # ==================================================
+
+    @staticmethod
+    def _is_rate_limit_error(error):
+
+        text = str(error).lower()
+
+        return (
+            "429" in text
+            or "rate limit" in text
+            or "too many requests" in text
+            or "quota" in text
+        )
+
+    # ==================================================
+    # DAILY QUOTA DETECTION
+    # ==================================================
+
+    @staticmethod
+    def _is_daily_quota_error(error):
+
+        text = str(error).lower()
+
+        return (
+            "per day" in text
+            or "daily" in text
+            or "daily quota" in text
+            or "limit:" in text
+        )
 
     # ==================================================
     # GEMINI REQUEST
@@ -54,6 +90,7 @@ class GeminiProvider(AIProvider):
                 text = interaction.output_text
 
                 if not text:
+
                     raise RuntimeError(
                         "Gemini returned an empty response."
                     )
@@ -63,6 +100,79 @@ class GeminiProvider(AIProvider):
             except Exception as error:
 
                 last_error = error
+
+                # ==========================================
+                # RATE LIMIT / QUOTA HANDLING
+                # ==========================================
+
+                if self._is_rate_limit_error(error):
+
+                    print()
+                    print("=" * 60)
+                    print("AURA GEMINI RATE LIMIT")
+                    print("=" * 60)
+                    print(
+                        f"Model: {self.model}"
+                    )
+                    print(
+                        f"Attempt: {attempt}/{self.max_retries}"
+                    )
+                    print(
+                        f"Error: {error}"
+                    )
+
+                    # --------------------------------------
+                    # DAILY QUOTA
+                    # --------------------------------------
+
+                    if self._is_daily_quota_error(error):
+
+                        print(
+                            "Daily quota appears to be exhausted."
+                        )
+
+                        print(
+                            "Stopping retries to avoid "
+                            "wasting API requests."
+                        )
+
+                        print("=" * 60)
+
+                        raise GeminiRateLimitError(
+                            "Gemini daily quota/rate limit "
+                            f"was reached for model '{self.model}'. "
+                            "No additional retry was attempted."
+                        ) from error
+
+                    # --------------------------------------
+                    # TEMPORARY RATE LIMIT
+                    # --------------------------------------
+
+                    if attempt < self.max_retries:
+
+                        wait_seconds = 60
+
+                        print(
+                            f"Temporary rate limit detected. "
+                            f"Waiting {wait_seconds} seconds..."
+                        )
+
+                        time.sleep(
+                            wait_seconds
+                        )
+
+                        continue
+
+                    print("=" * 60)
+
+                    raise GeminiRateLimitError(
+                        "Gemini rate limit remained active "
+                        f"after {self.max_retries} attempts."
+                    ) from error
+
+                # ==========================================
+                # OTHER ERRORS
+                # ==========================================
 
                 print(
                     f"[Gemini] Request failed "
@@ -101,6 +211,7 @@ class GeminiProvider(AIProvider):
                 lines
                 and lines[-1].strip() == "```"
             ):
+
                 lines = lines[:-1]
 
             text = "\n".join(
@@ -109,7 +220,9 @@ class GeminiProvider(AIProvider):
 
         try:
 
-            result = json.loads(text)
+            result = json.loads(
+                text
+            )
 
         except json.JSONDecodeError as error:
 
@@ -152,6 +265,7 @@ class GeminiProvider(AIProvider):
         for path, content in files.items():
 
             if not isinstance(path, str):
+
                 continue
 
             if not isinstance(content, str):
@@ -187,17 +301,20 @@ class GeminiProvider(AIProvider):
                 filename.startswith("test_")
                 and filename.endswith(".py")
             ):
+
                 return True
 
             if (
                 filename.endswith("_test.py")
             ):
+
                 return True
 
             if (
                 normalized.startswith("tests/")
                 and filename.endswith(".py")
             ):
+
                 return True
 
         return False
@@ -257,7 +374,7 @@ For a Python application, you MUST return:
 2. requirements.txt
 3. At least ONE automated functional test file.
 
-For example:
+Example:
 
 {{
     "files": {{
@@ -279,23 +396,13 @@ The test file MUST NOT be omitted.
 
 The test file MUST test the ACTUAL USER REQUIREMENTS.
 
-For a calculator:
+Do not create fake tests.
 
-- test addition
-- test subtraction
-- test multiplication
-- test division
+Do not only test application startup.
 
-A test that only checks:
+Do not only test that functions exist.
 
-    assert callable(main)
-
-is NOT sufficient.
-
-A test that only checks whether the application starts
-is NOT sufficient.
-
-The tests must execute the actual functionality.
+Tests must execute actual functionality.
 
 ==================================================
 APPLICATION DESIGN
@@ -307,57 +414,27 @@ can be imported and tested.
 Avoid putting all business logic inside
 an untestable interactive loop.
 
-For example:
-
-def add(a, b):
-    return a + b
-
-def subtract(a, b):
-    return a - b
-
-etc.
-
-Then tests should import and execute
-those functions.
-
 ==================================================
 STRICT RULES
 ==================================================
 
 1. Return ONLY valid JSON.
-
 2. Do NOT return markdown.
-
 3. Do NOT use code fences.
-
 4. Every file must contain COMPLETE code.
-
 5. Do NOT return pseudo-code.
-
 6. Do NOT return TODO placeholders.
-
 7. Do NOT omit required files.
-
 8. ALWAYS include requirements.txt.
-
 9. ALWAYS include automated functional tests.
-
 10. Tests MUST verify actual functionality.
-
 11. Use relative project paths only.
-
 12. Python files must compile.
-
 13. Imports must be valid.
-
 14. Tests must be executable with pytest.
-
 15. Do not weaken requirements.
-
 16. Do not create fake tests.
-
 17. Do not only test application startup.
-
 18. The generated project must be genuinely functional.
 
 ==================================================
@@ -378,11 +455,17 @@ If any of these are missing, FIX them before returning.
 Return ONLY the final JSON.
 """
 
-        response = self._request(prompt)
+        response = self._request(
+            prompt
+        )
 
-        result = self._parse_json(response)
+        result = self._parse_json(
+            response
+        )
 
-        files = self._validate_files(result)
+        files = self._validate_files(
+            result
+        )
 
         if not self._has_tests(files):
 
@@ -461,42 +544,26 @@ DETECTED ERRORS
 )}
 
 ==================================================
-CRITICAL FAILURE
+REPAIR REQUIREMENT
 ==================================================
 
-The project currently has NO functional test files.
+Repair ALL detected errors.
 
-You MUST fix this.
+If functional tests are missing,
+CREATE functional pytest tests.
 
-You MUST create:
+Tests must verify the actual user requirements.
 
-tests/test_main.py
-
-or another valid pytest test file.
-
-==================================================
-TEST REQUIREMENT
-==================================================
-
-Tests MUST verify the ORIGINAL USER REQUIREMENTS.
-
-For the calculator task, the tests MUST execute:
-
-addition
-subtraction
-multiplication
-division
-
-Do NOT create a fake test.
+Do NOT create fake tests.
 
 Do NOT only test that functions exist.
 
-Do NOT only test that the program starts.
+Do NOT only test application startup.
 
-Do NOT weaken the requirements.
+Preserve existing functionality.
 
 ==================================================
-IMPORTANT
+FINAL PROJECT
 ==================================================
 
 The final project MUST contain:
@@ -505,14 +572,11 @@ The final project MUST contain:
 2. requirements.txt
 3. Functional pytest tests.
 
-The application code must expose
-testable functions.
-
 ==================================================
 OUTPUT FORMAT
 ==================================================
 
-Return:
+Return ONLY valid JSON:
 
 {{
     "files": {{
@@ -527,49 +591,38 @@ STRICT RULES
 ==================================================
 
 1. Return ONLY valid JSON.
-
 2. No markdown.
-
 3. No code fences.
-
 4. Return COMPLETE files.
-
 5. Preserve existing functionality.
-
-6. Fix the detected errors.
-
+6. Fix ALL detected errors.
 7. ADD missing functional tests.
-
 8. Tests must verify actual functionality.
-
 9. Do NOT remove tests.
-
 10. Do NOT weaken tests.
-
 11. Do NOT return pseudo-code.
-
 12. Do NOT return TODO placeholders.
-
 13. Python code must compile.
-
 14. Tests must run using pytest.
-
 15. Imports must be valid.
-
 16. Use relative paths.
-
 17. Always include requirements.txt.
-
 18. Always include at least one functional test file.
 
 Return ONLY final JSON.
 """
 
-        response = self._request(prompt)
+        response = self._request(
+            prompt
+        )
 
-        result = self._parse_json(response)
+        result = self._parse_json(
+            response
+        )
 
-        files = self._validate_files(result)
+        files = self._validate_files(
+            result
+        )
 
         if not self._has_tests(files):
 
